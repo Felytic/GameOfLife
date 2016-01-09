@@ -1,0 +1,16 @@
+body,
+html {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+body .container-fluid {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#lifeCanvas {
+  margin: auto;
+  background: silver;
+}
