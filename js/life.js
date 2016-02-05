@@ -1,20 +1,22 @@
 'use strict';
-var lifeCells = [
-  [0]
-];
-var CELL_SIZE = 10;
-var timer;
-var cyclical = true;
+var lifeCells = [[0]]; //2d matrix of 0 and 1
+var CELL_SIZE = 13; //diameter of cell circle
+var timer; //timer for creating next popolation
+var cyclicalWorld = true; 
 
 $(window).load(function() {
   resizeCanvas($('#lifeCanvas')[0], CELL_SIZE);
   fitCellsToCanvas(lifeCells, $('#lifeCanvas')[0], CELL_SIZE);
   drawCells(lifeCells, $('#lifeCanvas')[0], CELL_SIZE);
+
+  //figures - it's var in figures.js, it's object with lifeCells prests
   for (var f in figures) {
+    //Adding each figure to select menu
     $('#figuresList').append('<li><a href ="#">' + f + '</a></li>');
   }
+
   $('#figuresList li a').click(function() {
-    var key = $(this).html();
+    var key = $(this).html(); //Name of figure is key in figures object
     lifeCells = new Array(figures[key].length);
     for (var i = 0; i < figures[key].length; i++) {
       lifeCells[i] = figures[key][i].slice();
@@ -37,13 +39,13 @@ $('.play-pause').click(function() {
 
 $('#worldButton').click(function() {
   $(this).toggleClass('active');
-  cyclical = !cyclical;
+  cyclicalWorld = !cyclicalWorld;
 });
 
 $('#playButton').click(function() {
   if (!timer) {
     timer = setTimeout(function tick() {
-      nextPopulation(lifeCells, $('#lifeCanvas')[0], CELL_SIZE, cyclical);
+      nextPopulation(lifeCells, $('#lifeCanvas')[0], CELL_SIZE, cyclicalWorld);
       timer = setTimeout(tick, 1000 / $('#speedInput').val());
       // "500 / $('#speedInput').val()" duplicates because it should be calculated on each step
       //              ^ this value can be changed by user while animation
@@ -67,18 +69,17 @@ $('#lifeCanvas').click(function(pos) {
   var i = Math.floor(y / CELL_SIZE);
   var j = Math.floor(x / CELL_SIZE);
 
+  //Toggle cell
   lifeCells[i][j] = +!lifeCells[i][j];
   drawCell(this, i, j, lifeCells[i][j], CELL_SIZE);
 });
 
 $('#stepButton').click(function() {
-  nextPopulation(lifeCells, $('#lifeCanvas')[0], CELL_SIZE, cyclical);
+  nextPopulation(lifeCells, $('#lifeCanvas')[0], CELL_SIZE, cyclicalWorld);
 });
 
 $('#resetButton').click(function() {
-  lifeCells = [
-    [0]
-  ];
+  lifeCells = [[0]];
   fitCellsToCanvas(lifeCells, $('#lifeCanvas')[0], CELL_SIZE);
   drawCells(lifeCells, $('#lifeCanvas')[0], CELL_SIZE);
 });
@@ -131,18 +132,23 @@ function resizeCanvas(canvasElement, cellSize) {
   canvas.height(canvas.height() - canvas.height() % cellSize);
   canvas.width(container.width());
   canvas.width(canvas.width() - canvas.width() % cellSize);
+  //canvas is JQuery array, and canvas[0] is DOM element
   canvas[0].width = canvas.width();
   canvas[0].height = canvas.height();
 }
 
-function nextPopulation(cellsArray, canvasElement, cellSize, isCyclical) {
+function nextPopulation(cellsArray, canvasElement, cellSize, iscyclicalWorld) {
+  //Creating copy of original array
   var cells = cellsArray.map(e => e.slice());
+
   for (var i = 0; i < cells.length; i++) {
     for (var j = 0; j < cells[0].length; j++) {
-      var sum = 0;
+      var sum = 0; //Number of neighbours
+
+      //For all cells around
       for (var y = i - 1; y <= i + 1; y++) {
         for (var x = j - 1; x <= j + 1; x++) {
-          if (isCyclical) {
+          if (iscyclicalWorld) {
             var a = y < 0 ? y + cells.length : y;
             var b = x < 0 ? x + cells[i].length : x;
             a = a >= cells.length ? a - cells.length : a;
@@ -153,13 +159,18 @@ function nextPopulation(cellsArray, canvasElement, cellSize, isCyclical) {
           }
         }
       }
+      //Exclude cell itself
       sum -= cells[i][j];
-      if (cells[i][j]) {
+
+      //Do not move drawCell functions from blocs
+      //and marge into one function after two blocks,
+      //we need to redraw cell only in case of change
+      if (cells[i][j]) { //If cell is alive
         if (sum < 2 || sum > 3) {
           cellsArray[i][j] = 0;
           drawCell(canvasElement, i, j, 0, cellSize);
         }
-      } else {
+      } else { //If cell is dead
         if (sum == 3) {
           cellsArray[i][j] = 1;
           drawCell(canvasElement, i, j, 1, cellSize);
@@ -173,6 +184,7 @@ function drawCell(canvasElement, iPos, jPos, isAlive, cellSize) {
   var ctx = canvasElement.getContext('2d');
   var width = canvasElement.width;
   var height = canvasElement.height;
+
   //Calculate center of drawing circle
   var y = iPos * cellSize + cellSize / 2;
   var x = jPos * cellSize + cellSize / 2;
